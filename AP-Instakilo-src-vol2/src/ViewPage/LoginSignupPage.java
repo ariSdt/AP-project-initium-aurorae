@@ -4,8 +4,11 @@ import UserManagment.User;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.DriverManager;
 import java.util.Locale;
 import java.util.Scanner;
+
+import com.mysql.jdbc.Connection;
 
 public class LoginSignupPage {
     private static Scanner scanner = new Scanner(System.in);
@@ -98,7 +101,7 @@ public class LoginSignupPage {
         return iPasswordScore;    
     }
     
-    public static void run() throws NoSuchAlgorithmException {
+    public static void run() throws NoSuchAlgorithmException, IOException {
         User user;
         while (true){
             showMenu();
@@ -172,6 +175,26 @@ public class LoginSignupPage {
                     user.setEmail(email);
                     System.out.print("Enter your phone number: ");
                     String phoneNumber = scanner.nextLine();
+                    
+                    try {
+                    	
+                    	Class.forName("com.mysql.jdbc.Driver");             
+                        Connection connect = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/instagram?autoReconnect=true&useSSL=false", "root", ""); 
+                        String sqlOrder = "INSERT INTO users VALUES(?,?,?,?,?,?)";
+                        java.sql.PreparedStatement ps = connect.prepareStatement(sqlOrder);
+                        ps.setString(1, userName); 
+                        ps.setString(2, passWord);
+                        ps.setString(3, Bio);
+                        ps.setString(4,"" + age);
+                        ps.setString(5, phoneNumber);
+                        ps.setString(6, email);
+                        ps.executeUpdate();
+                        User user1 = new User(userName, passWord, Bio, email, age, phoneNumber);
+                        User.getUsers().add(user1);
+                        
+            		} catch (Exception e) {
+            			System.out.println("error handeling" + e.toString());
+            		}
                     System.out.println("\u001B[32m" + "++++++++++++++++++++++++++++++++++++++++" + "\u001B[0m");
                     System.out.println("\u001B[32m" + "Welcome " + user.getUserName() +"!" + "\u001B[0m");
                     System.out.println("\u001B[32m" + "++++++++++++++++++++++++++++++++++++++++" + "\u001B[0m");

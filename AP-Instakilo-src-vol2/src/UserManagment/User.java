@@ -2,8 +2,10 @@ package UserManagment;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Objects;
+import com.mysql.jdbc.Connection;
 
 public class User {
     private static ArrayList<User> Users = new ArrayList<>();
@@ -51,6 +53,16 @@ public class User {
         this.userName = userName;
         this.password = password;
     }
+    public User(String username, String password, String bio, String email, int age, String phoneNumber) {
+    	this.userName = username;
+    	this.password = password;
+    	this.age = age;
+    	this.Bio = bio;
+    	this.phoneNumber = phoneNumber;
+    	this.email = email;
+ 
+		
+	}
 
     public static ArrayList<User> getUsers() {
         return Users;
@@ -85,16 +97,61 @@ public class User {
         }
         User user = new User(userName, hashPassword(password));
         Users.add(user);
+        
         return user;
     }
 
     public static User logIn(String userName, String password) throws NoSuchAlgorithmException {
-        for (User user: Users){
-            if (user.getPassword().equals(hashPassword(password)) && user.getUserName().equals(userName)){
+    	
+    	String userHelp = null;
+    	String emailHelp = null;
+    	String passHelp = null;
+    	String bioHelp = null;
+    	String phoneHelp = null;
+    	int ageHelp = 18;
+    	
+    	
+    	try {
+    		
+        	Class.forName("com.mysql.jdbc.Driver");             
+            Connection connect = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/instagram?autoReconnect=true&useSSL=false", "root", ""); 
+            String sqlOrder = "SELECT * FROM users WHERE username = ? AND password = ?";
+            java.sql.PreparedStatement ps = connect.prepareStatement(sqlOrder);
+            ps.setString(1, userName);
+            ps.setString(2, password);
+            
+            
+            
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+            	
+            	userHelp = rs.getString("username");
+            	emailHelp = rs.getString("email");
+            	bioHelp = rs.getString("bio");
+            	ageHelp = Integer.parseInt(rs.getString("age"));
+            	phoneHelp = rs.getString("phone");
+            	passHelp = rs.getString("password");
+            	User user = new User(userHelp, passHelp, bioHelp, emailHelp, ageHelp, phoneHelp);
+            	
                 return user;
+            	
             }
-        }
-        return null;
+            
+            
+            
+		} catch (Exception e) {
+			System.out.println("error handeling" + e.toString());
+		}
+		return null;
+
+//        for (User user: Users){
+//            if (user.getPassword().equals(hashPassword(password)) && user.getUserName().equals(userHelp)){
+//                return user;
+//            }
+//        }
+//		return null;
+    	
+
     }
 
     public static User searchByUsername(String userName){
@@ -113,7 +170,7 @@ public class User {
         }
     }
 
-    private static String hashPassword(String password) throws NoSuchAlgorithmException {
+    public static String hashPassword(String password) throws NoSuchAlgorithmException {
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
         messageDigest.update(password.getBytes());
         return new String(messageDigest.digest());

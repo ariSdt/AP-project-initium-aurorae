@@ -1,15 +1,17 @@
 package ViewPage;
 
+
 import PostManagment.Post;
 import UserManagment.User;
-import UserManagment.UserFollowingFollower;
-
 import java.io.IOException;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Scanner;
-
+import com.mysql.jdbc.Connection;
 import static UserManagment.User.searchByUsername;
+
 
 public class UserPage {
     private static Scanner scanner = new Scanner(System.in);
@@ -75,7 +77,7 @@ public class UserPage {
         return optionChoosing();
     }
 
-    public static void run(User user){
+    public static void run(User user) throws IOException{
         while (true){
             showMenu();
             int choice = optionChoosing();
@@ -89,7 +91,8 @@ public class UserPage {
                 System.out.println("Enter your media address: (from gallery: C:\\Users\\Nik\\Desktop)");
                 String mediaAddress = scanner.nextLine();
                 mediaAddress = "C:\\Users\\Nik\\Desktop" + "\\" + mediaAddress;
-                Post post = new Post(user, postCaption, mediaAddress);
+                
+                Post post = new Post(user, postCaption, mediaAddress );
                 Post.getPosts().add(post);
                 System.out.println("Do you want to tag people to your post? 1. Yes 2. No");
                 int answer = optionChoosing1();
@@ -117,6 +120,22 @@ public class UserPage {
 
                     }
                 }
+                //store post in data base
+                try {
+                	
+                	Class.forName("com.mysql.jdbc.Driver");             
+                    Connection connect = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/instagram?autoReconnect=true&useSSL=false", "root", ""); 
+                    String sqlOrder = "INSERT INTO posts VALUES(?,?,?)";
+                    java.sql.PreparedStatement ps = connect.prepareStatement(sqlOrder);
+                    ps.setString(1, user.getUserName()); 
+            		ps.setString(2, mediaAddress);
+            		ps.setString(3, postCaption);
+            		ps.executeUpdate();
+                    
+                    
+        		} catch (Exception e) {
+        			System.out.println("error handeling" + e.toString());
+        		}
             }
             //Seeing my posts //////////////////////////////////////////////////////////////////////////////////////////
             else if (choice == 2){
@@ -126,6 +145,8 @@ public class UserPage {
             }
             //Follow  unfollow user ////////////////////////////////////////////////////////////////////////////////////
             else if (choice == 3){
+            	
+            	
                 int counter = 1;
                 for (User user1: User.getUsers()){
                     if (user1 != user && !(Objects.requireNonNull(user.getFollowings()))
@@ -140,12 +161,49 @@ public class UserPage {
                 else {*/
                     System.out.println("Enter the name of the user you want to follow: (Pick from the above list.)");
                     String userName = scanner.nextLine();
+                    
+                    //store follow action in data base
+                    try {
+                    	
+                    	
+                    	Class.forName("com.mysql.jdbc.Driver");             
+                        Connection connect = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/instagram?autoReconnect=true&useSSL=false", "root", ""); 
+                        String sqlOrder = "SELECT username FROM users WHERE username = ?";
+                        java.sql.PreparedStatement ps = connect.prepareStatement(sqlOrder);
+                        ps.setString(1, userName); 
+                		ResultSet rs = ps.executeQuery();
+                		
+                		
+                		while(rs.next()) {
+                			
+                			try {
+                				
+                				Class.forName("com.mysql.jdbc.Driver");             
+                                Connection connect1 = (Connection)DriverManager.getConnection("jdbc:mysql://localhost:3306/instagram?autoReconnect=true&useSSL=false", "root", ""); 
+                                String sqlOrder1 = "INSERT INTO follow VALUES(?,?)";
+                                java.sql.PreparedStatement ps1 = connect1.prepareStatement(sqlOrder1);
+                                ps1.setString(1, user.getUserName());
+                                ps1.setString(2, userName); 
+                                
+                                ps1.executeUpdate();
+								
+                				
+							} catch (Exception e) {
+								System.out.println("error handeling" + e.toString());
+							}
+                
+                			
+                		}
+                        
+            		} catch (Exception e) {
+            			System.out.println("error handeling" + e.toString());
+            		}
                     if (searchByUsername(userName) != null){
                         user.follow(searchByUsername(userName));
                     }
-                    else{
-                        System.out.println("\u001B[31m" + "User not found!" + "\u001B[0m");
-                    }
+//                    else{
+//                        System.out.println("\u001B[31m" + "User not found!" + "\u001B[0m");
+//                    }
                 //}
             }
 
